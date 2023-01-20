@@ -2,6 +2,11 @@ name: build
 on:
   workflow_dispatch:
   
+# on:
+#   push:
+#     branches:
+#       - main
+      
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,7 +21,7 @@ jobs:
       - run: npm test -- --coverage
         env:
           CI: true
-      - name: Upload code coverage
+      - name: upload code coverage
         uses: actions/upload-artifact@v3.1.0
         with:
           name: codecoverage
@@ -28,3 +33,21 @@ jobs:
         with:
           name: build
           path: build
+  
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: production
+      url: http://pumpkin-test.surge.sh
+    steps:
+      - name: Download the Build Artifact
+        uses: actions/download-artifact@v3.0.0
+        with:
+          name: build
+      - name: deploy to surge
+        run: npx surge --project '.' --domain pumpkin-test.surge.sh
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+          
